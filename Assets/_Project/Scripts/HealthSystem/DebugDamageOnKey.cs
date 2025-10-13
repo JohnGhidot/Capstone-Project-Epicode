@@ -1,18 +1,34 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+[DisallowMultipleComponent]
+[RequireComponent(typeof(PlayerHealth))]
 public class DebugDamageOnKey : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private KeyCode _key = KeyCode.V;
+    [SerializeField] private int _damageAmount = 10;
+    [SerializeField] private bool _logToConsole = true;
+
+    private PlayerHealth _playerHealth;
+
+    private void Awake()
     {
-        
+        _playerHealth = GetComponent<PlayerHealth>();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        
+        if (Input.GetKeyDown(_key) == true)
+        {
+            if (_playerHealth != null && _playerHealth.IsDead == false)
+            {
+                _playerHealth.TakeDamage(_damageAmount, gameObject);
+
+                if (_logToConsole == true)
+                {
+                    Debug.Log($"[DebugDamageOnKey] Danno: {_damageAmount}. HP: {_playerHealth.CurrentHP}/{_playerHealth.MaxhHP}");
+                }
+            }
+        }
     }
 }
+
