@@ -31,6 +31,10 @@ public class PlayerController : MonoBehaviour
     private float _verticalSpeed;
     private bool _isGrounded;
 
+    public bool IsMoving { get; private set; }
+    public Vector2 LastMoveInput { get; private set; }
+
+
 
     private void Awake()
     {
@@ -52,6 +56,9 @@ public class PlayerController : MonoBehaviour
         {
             input = input.normalized;
         }
+
+        LastMoveInput = input;
+        IsMoving = (input.sqrMagnitude > 0f);
 
         DoGroundCheck();
 
