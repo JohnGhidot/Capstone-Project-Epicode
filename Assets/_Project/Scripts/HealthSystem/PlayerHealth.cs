@@ -4,7 +4,7 @@ using UnityEngine.Events;
 public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [Header("HP")]
-    [SerializeField] private int _maxhHp = 100;
+    [SerializeField] private int _maxHp = 100;
     [SerializeField] private bool _startAtFullHp = true;
 
     [Header("Events")]
@@ -15,7 +15,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     private bool _isDead;
 
     public int CurrentHP { get { return _currentHp; } }
-    public int MaxhHP { get { return _maxhHp; } }
+    public int MaxHP { get { return _maxHp; } }
     public bool IsDead { get { return _isDead; } }
 
 
@@ -23,12 +23,12 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         if (_startAtFullHp == true)
         {
-            _currentHp = _maxhHp;
+            _currentHp = _maxHp;
         }
         else
         {
 
-            _currentHp = Mathf.Clamp(_currentHp, 0, _maxhHp);
+            _currentHp = Mathf.Clamp(_currentHp, 0, _maxHp);
         }
     }
 
@@ -45,7 +45,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
 
         int hpBeforeDmg = _currentHp;
-        _currentHp = Mathf.Clamp(_currentHp - amount, 0, _maxhHp);
+        _currentHp = Mathf.Clamp(_currentHp - amount, 0, _maxHp);
         int dmgTaken = hpBeforeDmg - _currentHp;
 
         if (dmgTaken > 0)
@@ -62,7 +62,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
     public void ResetToFull()
     {
-        _currentHp = _maxhHp;
+        _currentHp = _maxHp;
         _isDead = false;
     }
 

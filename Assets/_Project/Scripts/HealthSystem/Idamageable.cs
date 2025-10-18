@@ -5,7 +5,7 @@ using UnityEngine;
 public interface IDamageable
 {
     int CurrentHP { get; }
-    int MaxhHP { get; }
+    int MaxHP { get; }
     bool IsDead { get; }
     void TakeDamage(int amount, GameObject source);
 }

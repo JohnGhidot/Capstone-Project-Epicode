@@ -25,7 +25,7 @@ public class DebugDamageOnKey : MonoBehaviour
 
                 if (_logToConsole == true)
                 {
-                    Debug.Log($"[DebugDamageOnKey] Danno: {_damageAmount}. HP: {_playerHealth.CurrentHP}/{_playerHealth.MaxhHP}");
+                    Debug.Log($"[DebugDamageOnKey] Danno: {_damageAmount}. HP: {_playerHealth.CurrentHP}/{_playerHealth.MaxHP}");
                 }
             }
         }
