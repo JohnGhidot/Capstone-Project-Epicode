@@ -4,6 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(EnemyMoverKinematic))]
 [RequireComponent(typeof(EnemyAttackMelee))]
 [RequireComponent(typeof(EnemyHealth))]
+[RequireComponent(typeof(CharacterController))]
 public class Enemy : MonoBehaviour
 {
     private enum EnemyState { Idle, Chase, Attack, Dead }
@@ -15,6 +16,13 @@ public class Enemy : MonoBehaviour
 
     private EnemyMoverKinematic _mover;
     private EnemyAttackMelee _attack;
+
+    [Header("Gravity")]
+    [SerializeField] private float _gravityForce = -9.81f;
+    [SerializeField] private float _terminalVelocity = -50f;
+
+    private float _verticalSpeed;
+    private bool _isGrounded;
 
     [Header("Level / Scaling")]
     [SerializeField] private int _currentLevel = 1;
@@ -39,6 +47,9 @@ public class Enemy : MonoBehaviour
     private float _nextParryTime = 0f;
     private float _parryActiveUntil = 0f;
 
+    private float _nextAttackTime = 0f;
+    private CharacterController _cc;
+
     private EnemyState _state = EnemyState.Idle;
 
     public bool IsParryActive
@@ -60,6 +71,7 @@ public class Enemy : MonoBehaviour
     {
         _mover = GetComponent<EnemyMoverKinematic>();
         _attack = GetComponent<EnemyAttackMelee>();
+        _cc = GetComponent<CharacterController>();
 
         if (_anim == null)
         {
@@ -101,6 +113,28 @@ public class Enemy : MonoBehaviour
         if (_state == EnemyState.Dead)
         {
             return;
+        }
+
+        if (_anim != null && _cc != null)
+        {
+            Vector3 v = _cc.velocity;
+            v.y = 0f;
+            float speed = v.magnitude;
+            _anim.SetFloat("Speed", speed);
+        }
+
+        _isGrounded = _cc.isGrounded;
+
+        if (_isGrounded == true && _verticalSpeed < 0f)
+        {
+            _verticalSpeed = -2f;
+        }
+
+        _verticalSpeed += _gravityForce * Time.deltaTime;
+
+        if (_verticalSpeed < _terminalVelocity)
+        {
+            _verticalSpeed = _terminalVelocity;
         }
 
         if (_player == null)
@@ -151,10 +185,28 @@ public class Enemy : MonoBehaviour
 
                     MaybeOpenParryWindow();
 
-                    _attack.TryAttack();
+                    if (Time.time >= _nextAttackTime)
+                    {
+                        bool facing = IsFacingTarget(_player, _archetype.AttackAngleTolerance);
+                        if (facing == true)
+                        {
+                            _nextAttackTime = Time.time + _effectiveCooldown;
+
+                            if (_anim != null)
+                            {
+                                _anim.SetTrigger("Attack");
+                            }
+                            else
+                            {
+                                _attack.PerformAttackWithWindupFallback(_archetype.WindupTime);
+                            }
+                        }
+                    }
                     break;
                 }
         }
+
+        _cc.Move(new Vector3(0f, _verticalSpeed, 0f) * Time.deltaTime);
     }
 
     public void ApplyDifficulty()
@@ -301,11 +353,6 @@ public class Enemy : MonoBehaviour
     }
 
     public void OnSuccessfullParry(GameObject source)
-    {
-        OnSuccessfulParry(source);
-    }
-
-    public void OnSuccessfulParry(GameObject source)
     {
         if (_anim != null)
         {

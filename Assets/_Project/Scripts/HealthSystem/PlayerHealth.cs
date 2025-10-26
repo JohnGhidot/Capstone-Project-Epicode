@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
+[DisallowMultipleComponent]
 public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [Header("HP")]
@@ -11,8 +12,14 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     [SerializeField] private UnityEvent<int> _onDamaged;
     [SerializeField] private UnityEvent _onDied;
 
+    [Header("Animator")]
+    [SerializeField] private Animator _anim;
+
     private int _currentHp;
     private bool _isDead;
+
+    private PlayerController _playerController;
+    private PlayerAttackMelee _playerAttackMelee;
 
     public int CurrentHP { get { return _currentHp; } }
     public int MaxHP { get { return _maxHp; } }
@@ -30,6 +37,9 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
             _currentHp = Mathf.Clamp(_currentHp, 0, _maxHp);
         }
+
+        _playerController = GetComponent<PlayerController>();
+        _playerAttackMelee = GetComponent<PlayerAttackMelee>();
     }
 
     public void TakeDamage(int amount, GameObject source)
@@ -56,6 +66,21 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         if (_currentHp <= 0)
         {
             _isDead = true;
+
+            if (_anim != null)
+            {
+                _anim.SetBool("Dead", true);
+            }
+
+            if (_playerController != null)
+            {
+                _playerController.enabled = false;
+            }
+            if (_playerAttackMelee != null)
+            {
+                _playerAttackMelee.enabled = false;
+            }
+
             _onDied?.Invoke();
         }
     }
@@ -64,6 +89,22 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         _currentHp = _maxHp;
         _isDead = false;
+
+        if (_anim != null)
+        {
+            _anim.SetBool("Dead", false);
+        }
+
+        if (_playerController != null)
+        {
+            _playerController.enabled = true;
+        }
+
+        if (_playerAttackMelee != null)
+        {
+            _playerAttackMelee.enabled = true;
+        }
+
     }
 
     public void Kill()

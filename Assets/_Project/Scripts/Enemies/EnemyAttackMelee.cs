@@ -10,81 +10,31 @@ public class EnemyAttackMelee : MonoBehaviour
 
     [Header("Runtime Attack Parameters")]
     [SerializeField] private int _damage = 10;
-    [SerializeField] private float _cooldown = 1.2f;
     [SerializeField] private float _windup = 0.2f;
     [SerializeField] private float _hitRadius = 0.75f;
-    [SerializeField] private float _attackAngleTolerance = 60f;
 
-    private float _nextAttackTime = 0f;
-    private Animator _anim;
     private Transform _target;
-
-    private void Awake()
-    {
-        _anim = GetComponent<Animator>();
-    }
 
     public void SetupRuntime(int damage, float cooldown, float windup, float hitRadius, float angleTol, Transform target)
     {
         _damage = damage;
-        _cooldown = cooldown;
         _windup = windup;
         _hitRadius = hitRadius;
-        _attackAngleTolerance = angleTol;
         _target = target;
     }
 
-    private bool IsReadyToAttacK()
+    public void PerformAttackWithWindupFallback(float windup)
     {
-        if (Time.time >= _nextAttackTime)
+        if (windup < 0f)
         {
-            return true;
+            windup = 0f;
         }
-        else
-        {
-            return false;
-        }
+        StartCoroutine(Co_DelayedHit(windup));
     }
 
-    public bool IsFacingTarget(Transform t, float toleranceDeg)
+    private IEnumerator Co_DelayedHit(float windup)
     {
-        if (t == null)
-        {
-            return false;
-        }
-        Vector3 toTarget = t.position - transform.position;
-        toTarget.y = 0f;
-
-        if (toTarget.sqrMagnitude < 0.0001f)
-        {
-            return true;
-        }
-
-        return Vector3.Angle(transform.forward, toTarget.normalized) <= toleranceDeg;
-    }
-
-    public void TryAttack()
-    {
-        if (!IsReadyToAttacK() || _target == null || !IsFacingTarget(_target, _attackAngleTolerance))
-        {
-            return;
-        }
-
-        _nextAttackTime = Time.time + _cooldown;
-
-        if (_anim != null)
-        {
-            _anim.SetTrigger("Attack");
-        }
-        else
-        {
-            StartCoroutine(Co_DelayedHit());
-        }
-    }
-
-    private IEnumerator Co_DelayedHit()
-    {
-        yield return new WaitForSeconds(_windup);
+        yield return new WaitForSeconds(windup);
         DoMeleeHit();
     }
 
