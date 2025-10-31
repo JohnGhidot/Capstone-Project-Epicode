@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 [DisallowMultipleComponent]
 public class PlayerAttackMelee : MonoBehaviour
@@ -12,25 +11,20 @@ public class PlayerAttackMelee : MonoBehaviour
     [Header("Attack Settings")]
     [SerializeField] private int _damage = 20;
     [SerializeField] private float _attackCooldown = 0.9f;
-    [SerializeField] private float _hitRadius = 0.9f;
-    [SerializeField] private LayerMask _hitMask;
 
-    [Header("Parry Settings")]
-    [SerializeField] private float _parryWindow = 0.3f;
-    [SerializeField] private float _parryCooldown = 0.9f;
+    [Header("Weapon Hitbox")]
+    [SerializeField] private WeaponHitbox _weaponHitbox;
+    [SerializeField] private LayerMask _targetMaskForWeapon;
+    [SerializeField] private float _swingDuration = 0.4f;
 
     private float _nextAttackTime;
-    private float _nextParryTime;
-    private float _parryActiveUntil;
-    private bool _parryFlag;
+    private bool _isSwinging;
 
-    private readonly HashSet<IDamageable> _hitThisSwing = new HashSet<IDamageable>();
-
-    public bool IsParryActive
+    private void Awake()
     {
-        get
+        if (_weaponHitbox != null)
         {
-            return _parryFlag == true && Time.time <= _parryActiveUntil;
+            _weaponHitbox.Setup(transform, _damage, _targetMaskForWeapon);
         }
     }
 
@@ -38,103 +32,35 @@ public class PlayerAttackMelee : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0) == true)
         {
-            if (Time.time >= _nextAttackTime)
+            if (Time.time >= _nextAttackTime && _isSwinging == false)
             {
                 _nextAttackTime = Time.time + _attackCooldown;
-                //if (_anim != null)
-                //{
-                //    _anim.SetTrigger("Attack");
-                //}
+                StartCoroutine(Co_Swing());
             }
-        }
-
-        if (Input.GetMouseButtonDown(1) == true)
-        {
-            if (Time.time >= _nextParryTime)
-            {
-                _nextParryTime = Time.time + _parryCooldown;
-                _parryFlag = true;
-                _parryActiveUntil = Time.time + _parryWindow;
-
-                if (_anim != null)
-                {
-                    _anim.SetTrigger("Parry");
-                }
-            }
-        }
-
-        if (_parryFlag == true && Time.time > _parryActiveUntil)
-        {
-            _parryFlag = false;
-        }
-
-    }
-
-    public void OnAttackStart()
-    {
-        _hitThisSwing.Clear();
-    }
-
-    public void DoMeleeHit()
-    {
-        Vector3 center;
-        if (_hitOrigin != null)
-        {
-            center = _hitOrigin.position;
-        }
-        else
-        {
-            Vector3 forwardOffset = transform.forward * 0.9f;
-            Vector3 upwardOffset = Vector3.up * 1.2f;
-            center = transform.position + forwardOffset + upwardOffset;
-
-        }
-
-        Collider[] hits = Physics.OverlapSphere(center, _hitRadius, _hitMask, QueryTriggerInteraction.Collide);
-
-        if (hits == null || hits.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < hits.Length; i++)
-        {
-            Collider currentCollider = hits[i];
-
-            if (currentCollider == null)
-            {
-                continue;
-            }
-
-            IDamageable dmg = currentCollider.GetComponentInParent<IDamageable>();
-
-            if (dmg == null)
-            {
-                continue;
-            }
-
-            if (_hitThisSwing.Contains(dmg) == true)
-            {
-                continue;
-            }
-
-            dmg.TakeDamage(_damage, gameObject);
-
-            _hitThisSwing.Add(dmg);
         }
     }
 
-    public void OnAttackEnd()
+    private IEnumerator Co_Swing()
     {
-        _hitThisSwing.Clear();
-    }
+        _isSwinging = true;
 
-    private void OnDrawGizmosSelected()
-    {
-        if (_hitOrigin != null)
+        if (_anim != null)
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(_hitOrigin.position, _hitRadius);
+            _anim.SetTrigger("Attack");
         }
+
+        if (_weaponHitbox != null)
+        {
+            _weaponHitbox.BeginSwing();
+        }
+
+        yield return new WaitForSeconds(_swingDuration);
+
+        if (_weaponHitbox != null)
+        {
+            _weaponHitbox.EndSwing();
+        }
+
+        _isSwinging = false;
     }
 }

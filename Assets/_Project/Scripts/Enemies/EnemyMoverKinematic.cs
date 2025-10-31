@@ -4,11 +4,10 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 public class EnemyMoverKinematic : MonoBehaviour
-
 {
-
     [Header("References")]
     [SerializeField] private Transform _target;
+    [SerializeField] private Animator _anim;
 
     [Header("Movement Settings")]
     [SerializeField] private float _moveSpeed = 3.5f;
@@ -23,10 +22,18 @@ public class EnemyMoverKinematic : MonoBehaviour
 
     private CharacterController _characterController;
 
+    private float _animSpeed;
+    private float _animSpeedVel;
+    [SerializeField] private float _animSpeedDamp = 0.08f;
 
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+
+        if (_anim == null)
+        {
+            _anim = GetComponent<Animator>();
+        }
     }
 
     public void SetTarget(Transform t)
@@ -38,6 +45,11 @@ public class EnemyMoverKinematic : MonoBehaviour
     {
         if (_target == null)
         {
+            if (_anim != null)
+            {
+                _anim.SetFloat("Speed", 0f);
+            }
+
             return;
         }
 
@@ -46,18 +58,23 @@ public class EnemyMoverKinematic : MonoBehaviour
 
         if (directionToTarget.sqrMagnitude <= _stopDistance * _stopDistance)
         {
+            if (_anim != null)
+            {
+                _anim.SetFloat("Speed", 0f);
+            }
+
             RotateTowards(_target.position);
             return;
         }
 
         Vector3 dir = directionToTarget.normalized;
 
-
         Vector3 fwd = transform.forward;
         Vector3 left = Quaternion.Euler(0f, -_sideAngle, 0f) * fwd;
         Vector3 right = Quaternion.Euler(0f, _sideAngle, 0f) * fwd;
 
         Vector3 avoid = Vector3.zero;
+
         if (Physics.Raycast(transform.position + Vector3.up, fwd, _rayDistance * 9f, _obstacleMask, QueryTriggerInteraction.Ignore))
         {
             avoid += -fwd;
@@ -82,6 +99,7 @@ public class EnemyMoverKinematic : MonoBehaviour
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _turnSpeed * Time.deltaTime);
 
         Vector3 step = dir * _moveSpeed * Time.deltaTime;
+
         if (_characterController != null)
         {
             _characterController.Move(step);
@@ -89,6 +107,33 @@ public class EnemyMoverKinematic : MonoBehaviour
         else
         {
             transform.position += step;
+        }
+
+        float currentSpeed;
+
+        if (_characterController != null)
+        {
+            currentSpeed = _characterController.velocity.magnitude;
+        }
+        else
+        {
+            float dt = Time.deltaTime;
+
+            if (dt > 0f)
+            {
+                currentSpeed = step.magnitude / dt;
+            }
+            else
+            {
+                currentSpeed = 0f;
+            }
+        }
+
+        _animSpeed = Mathf.SmoothDamp(_animSpeed, currentSpeed, ref _animSpeedVel, _animSpeedDamp);
+
+        if (_anim != null)
+        {
+            _anim.SetFloat("Speed", _animSpeed);
         }
     }
 

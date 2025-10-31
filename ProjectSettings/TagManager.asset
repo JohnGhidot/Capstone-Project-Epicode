@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - Obstacle
+  - Shield
   layers:
   - Default
   - TransparentFX
@@ -17,9 +18,9 @@ TagManager:
   - Ground
   - Obstacle
   - Enemy
-  - 
-  - 
-  - 
+  - Shield
+  - Weapon
+  - Hurtbox
   - 
   - 
   - 

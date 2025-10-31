@@ -12,6 +12,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Sprite _youWinSprite;
     [SerializeField] private Sprite _youLoseSprite;
 
+    [Header("Crosshair")]
+    [SerializeField] private CrosshairUI _crosshair;
+
     [Header("Flow")]
     [SerializeField] private int _mainMenuBuildIndex = 0;
 
@@ -29,13 +32,18 @@ public class UIManager : MonoBehaviour
             _continueButton.SetActive(false);
         }
 
-        if ( Time.timeScale != 1f)
+        if (Time.timeScale != 1f)
         {
             Time.timeScale = 1f;
         }
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+
+        if (_crosshair != null)
+        {
+            _crosshair.Show();
+        }
     }
 
     public void OnEnemyDefeated()
@@ -52,6 +60,11 @@ public class UIManager : MonoBehaviour
     {
         _winShown = win;
 
+        if (_crosshair != null)
+        {
+            _crosshair.Hide();
+        }
+
         if (_resultPanel != null)
         {
             _resultPanel.SetActive(true);
@@ -63,8 +76,7 @@ public class UIManager : MonoBehaviour
             _titleImage.enabled = (_titleImage.sprite != null);
         }
 
-
-        bool hasNext = HasNextScene();
+        bool hasNext = true;  /*HasNextScene(); DA RIATTIVARE*/
         if (_continueButton != null)
         {
             if (win == true && hasNext == true)
@@ -92,6 +104,11 @@ public class UIManager : MonoBehaviour
 
         Time.timeScale = 1f;
 
+        if (_crosshair != null)
+        {
+            _crosshair.Show();
+        }
+
         int current = SceneManager.GetActiveScene().buildIndex;
         int next = current + 1;
         int total = SceneManager.sceneCountInBuildSettings;
@@ -109,12 +126,23 @@ public class UIManager : MonoBehaviour
     public void OnRetryClicked()
     {
         Time.timeScale = 1f;
+
+        if (_crosshair != null)
+        {
+            _crosshair.Show();
+        }
+
         int current = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(current);
     }
 
     public void OnMainMenuClicked()
     {
+        if (_crosshair != null)
+        {
+            _crosshair.Hide();
+        }
+
         Time.timeScale = 1f;
         SceneManager.LoadScene(_mainMenuBuildIndex);
     }
