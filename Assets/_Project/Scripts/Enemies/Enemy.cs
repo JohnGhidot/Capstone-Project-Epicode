@@ -56,14 +56,7 @@ public class Enemy : MonoBehaviour
     {
         get
         {
-            if (Time.time < _parryActiveUntil)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return false;
         }
     }
 
@@ -195,6 +188,7 @@ public class Enemy : MonoBehaviour
                             if (_anim != null)
                             {
                                 _anim.SetTrigger("Attack");
+                                _attack.PerformAttackWithWindupFallback(_archetype.WindupTime);
                             }
                             else
                             {
@@ -287,105 +281,22 @@ public class Enemy : MonoBehaviour
 
     private void MaybeOpenParryWindow()
     {
-        if (_canParry == false)
-        {
-            return;
-        }
-
-        if (_player == null)
-        {
-            return;
-        }
-
-        if (Time.time < _nextParryTime)
-        {
-            return;
-        }
-
-        bool inMelee = IsInAttackRange(_archetype.AttackRange + 0.35f);
-        if (inMelee == false)
-        {
-            return;
-        }
-
-        bool facing = IsFacingTarget(_player, _parryAngleTolerance);
-        if (facing == false)
-        {
-            return;
-        }
-
-        float chanceThisFrame = _parryChancePerSecond * Time.deltaTime;
-        float roll = Random.value;
-
-        bool doParry = false;
-        if (roll <= chanceThisFrame)
-        {
-            doParry = true;
-        }
-
-        if (doParry == true)
-        {
-            TryBeginParry();
-        }
+        return;
     }
 
     public bool TryBeginParry()
     {
-        if (_canParry == false)
-        {
-            return false;
-        }
-
-        if (Time.time < _nextParryTime)
-        {
-            return false;
-        }
-
-        _parryActiveUntil = Time.time + _parryWindow;
-        _nextParryTime = Time.time + _parryCooldown;
-
-        if (_anim != null)
-        {
-            _anim.SetTrigger("Parry");
-        }
-
-        return true;
+        return false;
     }
 
     public void OnSuccessfullParry(GameObject source)
     {
-        if (_anim != null)
-        {
-            _anim.SetTrigger("ParrySuccess");
-        }
+        return;
     }
 
     public bool WillParryIncomingFrom(GameObject source)
     {
-        if (_canParry == false)
-        {
-            return false;
-        }
-
-        if (source == null)
-        {
-            return false;
-        }
-
-        if (IsParryActive == false)
-        {
-            return false;
-        }
-
-        bool facing = IsFacingTarget(source.transform, _parryAngleTolerance);
-        if (facing == true)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     private bool IsFacingTarget(Transform t, float toleranceDeg)
@@ -426,12 +337,11 @@ public class Enemy : MonoBehaviour
 
         _state = EnemyState.Dead;
 
-        if (_anim != null)
-        {
-            _anim.SetTrigger("Die");
-        }
+        //if (_anim != null)
+        //{
+        //    _anim.SetTrigger("Die");
+        //}
     }
-
 
     private void InitWithPlayer()
     {

@@ -17,14 +17,33 @@ public class PlayerAttackMelee : MonoBehaviour
     [SerializeField] private LayerMask _targetMaskForWeapon;
     [SerializeField] private float _swingDuration = 0.4f;
 
+    [Header("Intention Ray (Crosshair Only)")]
+    [SerializeField] private RectTransform _crosshairRect;
+    [SerializeField] private Camera _uiCamera;
+    [SerializeField] private float _intentMaxDistance = 3.5f;
+    [SerializeField] private float _intentSphereRadius = 0.15f;
+    [SerializeField] private bool _requireIntentToAttack = false;
+
     private float _nextAttackTime;
     private bool _isSwinging;
+    private LayerMask _effectiveTargetMask;
 
     private void Awake()
     {
+        LayerMask maskToUse = _targetMaskForWeapon;
+        if (maskToUse.value == 0)
+        {
+            int hurtboxLayer = LayerMask.NameToLayer("Hurtbox");
+            if (hurtboxLayer >= 0)
+            {
+                maskToUse = 1 << hurtboxLayer;
+            }
+        }
+        _effectiveTargetMask = maskToUse;
+
         if (_weaponHitbox != null)
         {
-            _weaponHitbox.Setup(transform, _damage, _targetMaskForWeapon);
+            _weaponHitbox.Setup(transform, _damage, maskToUse);
         }
     }
 
@@ -32,12 +51,44 @@ public class PlayerAttackMelee : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0) == true)
         {
-            if (Time.time >= _nextAttackTime && _isSwinging == false)
+            if (Time.time >= _nextAttackTime)
             {
-                _nextAttackTime = Time.time + _attackCooldown;
-                StartCoroutine(Co_Swing());
+                if (_isSwinging == false)
+                {
+                    bool canStart = EvaluateIntent();
+                    if (_requireIntentToAttack == true && canStart == false)
+                    {
+                        return;
+                    }
+
+                    _nextAttackTime = Time.time + _attackCooldown;
+                    StartCoroutine(Co_Swing());
+                }
             }
         }
+    }
+
+    private bool EvaluateIntent()
+    {
+        if (_crosshairRect == null)
+        {
+            return true;
+        }
+
+        Vector3 screenPos = RectTransformUtility.WorldToScreenPoint(_uiCamera, _crosshairRect.position);
+        Ray ray = Camera.main.ScreenPointToRay(screenPos);
+
+        RaycastHit hit;
+        bool hasHit = Physics.SphereCast(
+            ray,
+            _intentSphereRadius,
+            out hit,
+            _intentMaxDistance,
+            _effectiveTargetMask,
+            QueryTriggerInteraction.Collide
+        );
+
+        return hasHit;
     }
 
     private IEnumerator Co_Swing()
@@ -49,18 +100,33 @@ public class PlayerAttackMelee : MonoBehaviour
             _anim.SetTrigger("Attack");
         }
 
-        if (_weaponHitbox != null)
+        if (_swingDuration < 0f)
         {
-            _weaponHitbox.BeginSwing();
+            _swingDuration = 0f;
         }
 
         yield return new WaitForSeconds(_swingDuration);
 
-        if (_weaponHitbox != null)
+        _isSwinging = false;
+    }
+
+    public void Anim_BeginSwing()
+    {
+        if (_weaponHitbox == null)
         {
-            _weaponHitbox.EndSwing();
+            return;
         }
 
-        _isSwinging = false;
+        _weaponHitbox.BeginSwing();
+    }
+
+    public void Anim_EndSwing()
+    {
+        if (_weaponHitbox == null)
+        {
+            return;
+        }
+
+        _weaponHitbox.EndSwing();
     }
 }

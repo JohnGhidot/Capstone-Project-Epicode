@@ -15,9 +15,9 @@ MonoBehaviour:
   BaseDamage: 10
   BaseMoveSpeed: 3.5
   AttackRange: 1.8
-  AttackCooldown: 1.2
+  AttackCooldown: 2.5
   TurnSpeed: 540
-  WindupTime: 0.2
+  WindupTime: 0.4
   HitRadius: 0.75
   AttackAngleTolerance: 60
   DamageMultByLevel:

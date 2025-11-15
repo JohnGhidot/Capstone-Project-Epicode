@@ -25,8 +25,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     public int MaxHP { get { return _maxHp; } }
     public bool IsDead { get { return _isDead; } }
 
-
-    void Awake()
+    private void Awake()
     {
         if (_startAtFullHp == true)
         {
@@ -34,25 +33,22 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
         else
         {
-
             _currentHp = Mathf.Clamp(_currentHp, 0, _maxHp);
         }
 
         _playerController = GetComponent<PlayerController>();
         _playerAttackMelee = GetComponent<PlayerAttackMelee>();
+
+        if (_anim == null)
+        {
+            _anim = GetComponent<Animator>();
+        }
     }
 
     public void TakeDamage(int amount, GameObject source)
     {
-        if (amount <= 0)
-        {
-            return;
-        }
-
-        if (_isDead == true)
-        {
-            return;
-        }
+        if (amount <= 0) { return; }
+        if (_isDead == true) { return; }
 
         int hpBeforeDmg = _currentHp;
         _currentHp = Mathf.Clamp(_currentHp - amount, 0, _maxHp);
@@ -60,28 +56,40 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
         if (dmgTaken > 0)
         {
-            _onDamaged?.Invoke(dmgTaken);
+            if (_onDamaged != null)
+            {
+                _onDamaged.Invoke(dmgTaken);
+            }
+
+            if (_currentHp > 0)
+            {
+                if (_anim != null)
+                {
+                    _anim.SetTrigger("Hit");
+                }
+            }
         }
 
         if (_currentHp <= 0)
         {
             _isDead = true;
 
-            if (_anim != null)
-            {
-                _anim.SetBool("Dead", true);
-            }
-
             if (_playerController != null)
             {
                 _playerController.enabled = false;
             }
+
             if (_playerAttackMelee != null)
             {
                 _playerAttackMelee.enabled = false;
             }
 
-            _onDied?.Invoke();
+            Time.timeScale = 0f;
+
+            if (_onDied != null)
+            {
+                _onDied.Invoke();
+            }
         }
     }
 
@@ -89,11 +97,6 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         _currentHp = _maxHp;
         _isDead = false;
-
-        if (_anim != null)
-        {
-            _anim.SetBool("Dead", false);
-        }
 
         if (_playerController != null)
         {
@@ -104,18 +107,11 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         {
             _playerAttackMelee.enabled = true;
         }
-
     }
 
     public void Kill()
     {
-        if (_isDead == true)
-        {
-            return;
-        }
-
+        if (_isDead == true) { return; }
         TakeDamage(_currentHp, gameObject);
-
     }
-
 }

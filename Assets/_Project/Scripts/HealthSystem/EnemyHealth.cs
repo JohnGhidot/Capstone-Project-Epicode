@@ -25,10 +25,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
     private void Awake()
     {
-        if (_maxHp < 1)
-        {
-                        _maxHp = 1;
-        }
+        if (_maxHp < 1) { _maxHp = 1; }
 
         CurrentHP = _maxHp;
 
@@ -38,53 +35,11 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
     public void TakeDamage(int amount, GameObject source)
     {
-        if (IsDead == true)
-        {
-            return;
-        }
-
-        if (amount <= 0)
-        {
-            return;
-        }
-
-        bool canCheckParry = false;
-        if (_enemy != null)
-        {
-            canCheckParry = true;
-        }
-
-        if (canCheckParry == true)
-        {
-            bool hasSource = false;
-            if (source != null)
-            {
-                hasSource = true;
-            }
-
-            if (hasSource == true)
-            {
-                bool willParry = false;
-                if (_enemy.WillParryIncomingFrom(source) == true)
-                {
-                    willParry = true;
-                }
-
-                if (willParry == true)
-                {
-                    _enemy.OnSuccessfullParry(source);
-                    return;
-                }
-            }
-        }
+        if (IsDead == true) { return; }
+        if (amount <= 0) { return; }
 
         int nextHP = CurrentHP - amount;
-
-        if (nextHP < 0)
-        {
-            nextHP = 0;
-        }
-
+        if (nextHP < 0) { nextHP = 0; }
         CurrentHP = nextHP;
 
         if (OnDamaged != null)
@@ -92,12 +47,15 @@ public class EnemyHealth : MonoBehaviour, IDamageable
             OnDamaged.Invoke(CurrentHP, _maxHp, source);
         }
 
-        bool shouldDie = false;
-        if (CurrentHP <= 0)
+        if (CurrentHP > 0)
         {
-            shouldDie = true;
+            if (_anim != null)
+            {
+                _anim.SetTrigger("Hit");
+            }
         }
-        if (shouldDie == true)
+
+        if (CurrentHP <= 0)
         {
             Die(source);
         }
@@ -105,21 +63,13 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
     public void Die(GameObject source)
     {
-        if (IsDead == true)
-        {
-            return;
-        }
+        if (IsDead == true) { return; }
 
         IsDead = true;
 
         if (_enemy != null)
         {
             _enemy.OnDeath();
-        }
-
-        if (_anim != null)
-        {
-            _anim.SetBool("Dead", true);
         }
 
         EnemyAttackMelee attack = GetComponent<EnemyAttackMelee>();
@@ -134,6 +84,8 @@ public class EnemyHealth : MonoBehaviour, IDamageable
             mover.enabled = false;
         }
 
+        Time.timeScale = 0f;
+
         if (OnDied != null)
         {
             OnDied.Invoke(source);
@@ -142,10 +94,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         if (_destroyOnDeath == true)
         {
             float delay = _destroyDelay;
-            if (delay < 0f)
-            {
-                delay = 0f;
-            }
+            if (delay < 0f) { delay = 0f; }
             Destroy(gameObject, delay);
         }
     }
