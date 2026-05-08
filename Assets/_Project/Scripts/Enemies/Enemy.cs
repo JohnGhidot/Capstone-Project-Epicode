@@ -37,28 +37,10 @@ public class Enemy : MonoBehaviour
     private float _effectiveMoveSpeed;
     private float _effectiveCooldown;
 
-    [Header("Parry")]
-    [SerializeField] private bool _canParry = true;
-    [SerializeField] private float _parryCooldown = 2.0f;
-    [SerializeField] private float _parryWindow = 0.30f;
-    [SerializeField] private float _parryAngleTolerance = 70f;
-    [SerializeField] private float _parryChancePerSecond = 0.35f;
-
-    private float _nextParryTime = 0f;
-    private float _parryActiveUntil = 0f;
-
     private float _nextAttackTime = 0f;
     private CharacterController _cc;
 
     private EnemyState _state = EnemyState.Idle;
-
-    public bool IsParryActive
-    {
-        get
-        {
-            return false;
-        }
-    }
 
     private void Awake()
     {
@@ -70,12 +52,23 @@ public class Enemy : MonoBehaviour
         {
             _anim = GetComponent<Animator>();
         }
+
+        if (_mover == null)
+        {
+            Debug.LogError("[Enemy] EnemyMoverKinematic mancante su " + gameObject.name, this);
+        }
+
+        if (_attack == null)
+        {
+            Debug.LogError("[Enemy] EnemyAttackMelee mancante su " + gameObject.name, this);
+        }
     }
 
     private void Start()
     {
         if (_archetype == null)
         {
+            Debug.LogError("[Enemy] Archetype non assegnato su " + gameObject.name, this);
             return;
         }
 
@@ -149,15 +142,15 @@ public class Enemy : MonoBehaviour
         {
             case EnemyState.Idle:
                 {
-                    MaybeOpenParryWindow();
                     break;
                 }
 
             case EnemyState.Chase:
                 {
-                    _mover.Tick();
-
-                    MaybeOpenParryWindow();
+                    if (_mover != null)
+                    {
+                        _mover.Tick();
+                    }
 
                     bool inRange = IsInAttackRange(_archetype.AttackRange);
                     if (inRange == true)
@@ -176,8 +169,6 @@ public class Enemy : MonoBehaviour
                         break;
                     }
 
-                    MaybeOpenParryWindow();
-
                     if (Time.time >= _nextAttackTime)
                     {
                         bool facing = IsFacingTarget(_player, _archetype.AttackAngleTolerance);
@@ -188,9 +179,9 @@ public class Enemy : MonoBehaviour
                             if (_anim != null)
                             {
                                 _anim.SetTrigger("Attack");
-                                _attack.PerformAttackWithWindupFallback(_archetype.WindupTime);
                             }
-                            else
+
+                            if (_attack != null) 
                             {
                                 _attack.PerformAttackWithWindupFallback(_archetype.WindupTime);
                             }
@@ -221,6 +212,18 @@ public class Enemy : MonoBehaviour
 
     public void SetupForLevel(int level)
     {
+        if (_archetype == null)
+        {
+            Debug.LogError("[Enemy] SetupForLevel chiamato ma _archetype è null su " + gameObject.name, this); 
+            return;
+        }
+
+        if (_mover == null || _attack == null)
+        {
+            Debug.LogError("[Enemy] SetupForLevel chiamato ma mover/attack sono null su " + gameObject.name, this);
+            return;
+        }
+
         if (level < 1)
         {
             level = 1;
@@ -279,26 +282,6 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void MaybeOpenParryWindow()
-    {
-        return;
-    }
-
-    public bool TryBeginParry()
-    {
-        return false;
-    }
-
-    public void OnSuccessfullParry(GameObject source)
-    {
-        return;
-    }
-
-    public bool WillParryIncomingFrom(GameObject source)
-    {
-        return false;
-    }
-
     private bool IsFacingTarget(Transform t, float toleranceDeg)
     {
         if (t == null)
@@ -336,15 +319,16 @@ public class Enemy : MonoBehaviour
         }
 
         _state = EnemyState.Dead;
-
-        //if (_anim != null)
-        //{
-        //    _anim.SetTrigger("Die");
-        //}
     }
 
     private void InitWithPlayer()
     {
+        if (_mover == null || _attack == null)
+        {
+            Debug.LogError("[Enemy] InitWithPlayer chiamato ma mover/attack sono null su " + gameObject.name, this);
+            return;
+        }
+
         _mover.SetTarget(_player);
 
         float stopDistance = _archetype.AttackRange * 0.9f;

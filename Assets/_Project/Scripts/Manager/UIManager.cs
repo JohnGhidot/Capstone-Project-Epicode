@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Image _titleImage;
     [SerializeField] private Sprite _youWinSprite;
     [SerializeField] private Sprite _youLoseSprite;
+    [SerializeField] private GameObject _pausePanel;
 
     [Header("Crosshair")]
     [SerializeField] private CrosshairUI _crosshair;
@@ -19,6 +20,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private int _mainMenuBuildIndex = 0;
 
     private bool _winShown = false;
+    private bool _isPaused = false;
 
     private void Awake()
     {
@@ -44,7 +46,36 @@ public class UIManager : MonoBehaviour
         {
             _crosshair.Show();
         }
+
+        _isPaused = false;
+
+        if (_pausePanel != null)
+        {
+            _pausePanel.SetActive(false);
+        }
     }
+
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape) == true)
+        {
+            if (_resultPanel != null && _resultPanel.activeSelf == true)
+            {
+                return;
+            }
+
+            if (_isPaused == false)
+            {
+                PauseGame();
+            }
+            else
+            {
+                ResumeGame();
+            }
+        }
+    }
+
 
     public void OnEnemyDefeated()
     {
@@ -59,6 +90,12 @@ public class UIManager : MonoBehaviour
     private void ShowResult(bool win)
     {
         _winShown = win;
+        _isPaused = false;
+
+        if (_pausePanel != null)
+        {
+            _pausePanel.SetActive(false);
+        }
 
         if (_crosshair != null)
         {
@@ -76,7 +113,7 @@ public class UIManager : MonoBehaviour
             _titleImage.enabled = (_titleImage.sprite != null);
         }
 
-        bool hasNext = true;  /*HasNextScene(); DA RIATTIVARE*/
+        bool hasNext = HasNextScene();
         if (_continueButton != null)
         {
             if (win == true && hasNext == true)
@@ -102,6 +139,7 @@ public class UIManager : MonoBehaviour
             return;
         }
 
+        _isPaused = false;
         Time.timeScale = 1f;
 
         if (_crosshair != null)
@@ -125,6 +163,7 @@ public class UIManager : MonoBehaviour
 
     public void OnRetryClicked()
     {
+        _isPaused = false;
         Time.timeScale = 1f;
 
         if (_crosshair != null)
@@ -143,6 +182,7 @@ public class UIManager : MonoBehaviour
             _crosshair.Hide();
         }
 
+        _isPaused = false;
         Time.timeScale = 1f;
         SceneManager.LoadScene(_mainMenuBuildIndex);
     }
@@ -161,5 +201,54 @@ public class UIManager : MonoBehaviour
         {
             return false;
         }
+    }
+
+
+    private void PauseGame()
+    {
+        _isPaused = true;
+        Time.timeScale = 0f;
+
+        if (_crosshair != null)
+        {
+            _crosshair.Hide();
+        }
+
+        if (_pausePanel != null)
+        {
+            _pausePanel.SetActive(true);
+        }
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    private void ResumeGame()
+    {
+        _isPaused = false;
+        Time.timeScale = 1f;
+
+        if (_pausePanel != null)
+        {
+            _pausePanel.SetActive(false);
+        }
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        if (_crosshair != null)
+        {
+            _crosshair.Show();
+        }
+    }
+
+    public void OnResumeClicked()
+    {
+        if (_isPaused == false)
+        {
+            return;
+        }
+
+        ResumeGame();
     }
 }
